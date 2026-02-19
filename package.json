@@ -1,0 +1,18 @@
+{
+  "name": "crop-health-advisory",
+  "version": "1.0.0",
+  "description": "Smart Crop-Health Advisory App",
+  "private": true,
+  "scripts": {
+    "start": "concurrently \"npm run server\" \"npm run client\"",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd backend && npm run dev",
+    "client": "cd frontend && npm start",
+    "server:start": "cd backend && npm start",
+    "client:build": "cd frontend && npm run build",
+    "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
