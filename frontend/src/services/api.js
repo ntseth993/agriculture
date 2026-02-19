@@ -1,13 +1,21 @@
 import axios from 'axios';
 
+// Configure API base URL
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+// Create axios instance with base URL
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+});
+
 export const cropService = {
   getAllCrops: async () => {
-    const response = await axios.get('/api/crops');
+    const response = await apiClient.get('/api/crops');
     return response.data;
   },
 
   getCropDetails: async (cropId) => {
-    const response = await axios.get(`/api/crops/${cropId}`);
+    const response = await apiClient.get(`/api/crops/${cropId}`);
     return response.data;
   },
 
@@ -27,7 +35,7 @@ export const cropService = {
       formData.append('cropId', cropId);
     }
 
-    const response = await axios.post('/api/crops/verify', formData, {
+    const response = await apiClient.post('/api/crops/verify', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -51,7 +59,7 @@ export const cropService = {
     formData.append('latitude', latitude);
     formData.append('longitude', longitude);
 
-    const response = await axios.post('/api/crops/verify-and-detect', formData, {
+      const response = await apiClient.post('/api/crops/verify-and-detect', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -82,7 +90,7 @@ export const diseaseService = {
     formData.append('language', language);
 
     try {
-      const response = await axios.post('/api/diseases/detect', formData, {
+      const response = await apiClient.post('/api/diseases/detect', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -96,7 +104,7 @@ export const diseaseService = {
 
   getDetectionHistory: async (language = 'en') => {
     try {
-      const response = await axios.get('/api/diseases/history', {
+      const response = await apiClient.get('/api/diseases/history', {
         params: { language },
       });
       return response.data;
@@ -108,7 +116,7 @@ export const diseaseService = {
 
   updateFeedback: async (detectionId, feedback) => {
     try {
-      const response = await axios.put(`/api/diseases/${detectionId}/feedback`, feedback);
+      const response = await apiClient.put(`/api/diseases/${detectionId}/feedback`, feedback);
       return response.data;
     } catch (error) {
       console.error('Feedback update error:', error);
@@ -119,33 +127,33 @@ export const diseaseService = {
 
 export const treatmentService = {
   getTreatments: async (filters = {}) => {
-    const response = await axios.get('/api/treatments', { params: filters });
+    const response = await apiClient.get('/api/treatments', { params: filters });
     return response.data;
   },
 
   getTreatmentsForDisease: async (diseaseId, type) => {
-    const response = await axios.get(`/api/treatments/disease/${diseaseId}`, {
+    const response = await apiClient.get(`/api/treatments/disease/${diseaseId}`, {
       params: { type },
     });
     return response.data;
   },
 
   addReview: async (treatmentId, review) => {
-    const response = await axios.post(`/api/treatments/${treatmentId}/review`, review);
+    const response = await apiClient.post(`/api/treatments/${treatmentId}/review`, review);
     return response.data;
   },
 };
 
 export const locationService = {
   findNearby: async (latitude, longitude, type, radius = 10) => {
-    const response = await axios.get('/api/location/nearby', {
+    const response = await apiClient.get('/api/location/nearby', {
       params: { latitude, longitude, type, radius },
     });
     return response.data;
   },
 
   updateLocation: async (latitude, longitude) => {
-    const response = await axios.put('/api/location/update-location', {
+    const response = await apiClient.put('/api/location/update-location', {
       latitude,
       longitude,
     });
@@ -153,24 +161,24 @@ export const locationService = {
   },
 
   getMyLocation: async () => {
-    const response = await axios.get('/api/location/my-location');
+    const response = await apiClient.get('/api/location/my-location');
     return response.data;
   },
 };
 
 export const alertService = {
   getAlerts: async (filters = {}) => {
-    const response = await axios.get('/api/alerts', { params: filters });
+    const response = await apiClient.get('/api/alerts', { params: filters });
     return response.data;
   },
 
   markAsRead: async (alertId) => {
-    const response = await axios.put(`/api/alerts/${alertId}/read`);
+    const response = await apiClient.put(`/api/alerts/${alertId}/read`);
     return response.data;
   },
 
   createAlert: async (alertData) => {
-    const response = await axios.post('/api/alerts', alertData);
+    const response = await apiClient.post('/api/alerts', alertData);
     return response.data;
   },
 };

@@ -1,19 +1,10 @@
 {
   "version": 2,
-  "buildCommand": "npm run install-all && npm run client:build",
-  "functions": {
-    "api/index.js": {
-      "memory": 1024,
-      "maxDuration": 60
+  "git": {
+    "deploymentEnabled": {
+      "main": true
     }
   },
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/api"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/build"
 }
