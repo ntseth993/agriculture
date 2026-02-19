@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
 import { ImageUploadComponent } from '../components/ImageUploadComponent';
 import { CropVerificationPanel } from '../components/CropVerificationPanel';
 import { diseaseService } from '../services/api';
@@ -11,7 +10,6 @@ export const DiseaseDetectionPage = () => {
   const [language, setLanguage] = useState('en');
   const [loading, setLoading] = useState(false);
   const [detection, setDetection] = useState(null);
-  const { user } = useAuth();
 
   const supportedLanguages = {
     en: 'English',

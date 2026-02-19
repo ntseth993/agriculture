@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { CropVerificationComponent } from '../components/CropVerificationComponent';
 import { ImageUploadComponent } from '../components/ImageUploadComponent';
-import { useAuth } from '../context/AuthContext';
 import { diseaseService, treatmentService } from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -13,7 +12,6 @@ export const CropVerificationPage = () => {
   const [loading, setLoading] = useState(false);
   const [detection, setDetection] = useState(null);
   const [treatments, setTreatments] = useState([]);
-  const { user } = useAuth();
 
   const handleVerified = async (data) => {
     setVerifiedCrop(data.crop);

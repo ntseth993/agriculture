@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaLeaf, FaCamera, FaMapMarkerAlt, FaBell, FaLock, FaMobileAlt, FaStar, FaQuoteLeft, FaArrowRight, FaTractor, FaShieldAlt, FaHeadset } from 'react-icons/fa';
+import { FaLeaf, FaCamera, FaMapMarkerAlt, FaBell, FaStar, FaQuoteLeft, FaArrowRight, FaTractor, FaShieldAlt, FaHeadset } from 'react-icons/fa';
 
 export const LandingPage = () => {
   const navigate = useNavigate();
