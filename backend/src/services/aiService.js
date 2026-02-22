@@ -1,4 +1,11 @@
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
+
+// OpenAI Configuration
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4-vision-preview';
+const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 
 // Disease knowledge base with symptoms and treatments
 const diseaseDatabase = {
@@ -46,35 +53,80 @@ const diseaseDatabase = {
   },
 };
 
-// Analyze image using simple image characteristics (color analysis)
-const analyzeImageCharacteristics = async (imageUrl) => {
+// Analyze image using OpenAI Vision API
+const analyzeImageWithOpenAI = async (imageUrl) => {
   try {
-    // In a real scenario, use ML API or TensorFlow.js
-    // For now, we'll use a heuristic approach based on common disease patterns
-    
-    // Simulate image analysis delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    return {
-      colorProfile: {
-        hasGreenish: true,
-        hasBrownish: false,
-        hasYellowish: false,
-        hasWhiteish: false,
+    if (!OPENAI_API_KEY) {
+      console.warn('OpenAI API key not configured, falling back to local analysis');
+      return null;
+    }
+
+    const response = await axios.post(
+      OPENAI_API_URL,
+      {
+        model: OPENAI_MODEL,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: `Analyze this crop/plant image for potential diseases. Identify:
+1. Crop type (if visible)
+2. Any visible symptoms or signs of disease
+3. Confidence level (0-100%)
+4. Specific diseases that might match these symptoms
+
+Respond in JSON format with: {
+  "cropType": "string",
+  "symptoms": ["array", "of", "symptoms"],
+  "confidenceLevel": number,
+  "possibleDiseases": [{
+    "name": "disease name",
+    "likelihood": number
+  }],
+  "description": "brief description of findings"
+}`,
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: imageUrl,
+                },
+              },
+            ],
+          },
+        ],
+        max_tokens: 1024,
       },
-      textureAnalysis: {
-        spotPresence: 0.3,
-        uniformity: 0.8,
-      },
-    };
+      {
+        headers: {
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    const analysisText = response.data.choices[0].message.content;
+    const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
+    
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+    
+    return null;
   } catch (error) {
-    console.log('Image analysis failed:', error.message);
+    console.error('OpenAI Vision API error:', error.response?.data || error.message);
     return null;
   }
 };
 
-// Detect disease based on symptoms and characteristics
-const detectDiseaseBySymptoms = (symptoms, imageCharacteristics) => {
+// Map OpenAI results to disease database
+const mapOpenAIResultsToDiseases = (openAIAnalysis) => {
+  if (!openAIAnalysis)
+    return null;
+
+  const symptoms = openAIAnalysis.symptoms || [];
   let bestMatch = null;
   let highestScore = 0;
 
@@ -85,55 +137,64 @@ const detectDiseaseBySymptoms = (symptoms, imageCharacteristics) => {
     const matchedSymptoms = symptoms.filter(s =>
       disease.symptoms.some(ds => ds.includes(s.toLowerCase()) || s.toLowerCase().includes(ds))
     );
-    matchScore += (matchedSymptoms.length / symptoms.length) * 0.7;
 
-    // Add random factor for variety in testing
-    matchScore += Math.random() * 0.3;
+    if (symptoms.length > 0) {
+      matchScore = matchedSymptoms.length / symptoms.length;
+    }
 
     if (matchScore > highestScore) {
-      highestScore = Math.max(highestScore, matchScore);
-      bestMatch = { diseaseId, disease, confidence: Math.min(highestScore, 0.95) };
+      highestScore = matchScore;
+      bestMatch = { diseaseId, disease, confidence: Math.min(matchScore * 100, 95) };
     }
   }
 
-  return bestMatch || { diseaseId: 'healthy', disease: diseaseDatabase.healthy, confidence: 0.85 };
+  // If no match found but symptoms detected, return custom analysis
+  if (!bestMatch && symptoms.length > 0) {
+    return {
+      diseaseId: 'identified_disease',
+      disease: {
+        name: openAIAnalysis.possibleDiseases?.[0]?.name || 'Unidentified Condition',
+        symptoms: symptoms,
+        description: openAIAnalysis.description || 'Plant shows signs of disease',
+        treatments: ['Consult local agricultural expert', 'Remove affected parts', 'Increase monitoring'],
+      },
+      confidence: openAIAnalysis.confidenceLevel || 60,
+    };
+  }
+
+  return bestMatch;
 };
 
-// Main disease detection function
-exports.detectDiseaseFromImage = async (imageUrl, cropType = 'potato') => {
+// Main disease detection function using OpenAI Vision API
+exports.detectDiseaseFromImage = async (imageUrl, cropType = 'crop') => {
   try {
-    // Analyze image characteristics
-    const characteristics = await analyzeImageCharacteristics(imageUrl);
+    // Try OpenAI Vision API first
+    const openAIAnalysis = await analyzeImageWithOpenAI(imageUrl);
 
-    // Determine symptoms based on image (heuristic approach)
-    const detectedSymptoms = [];
-    if (characteristics && characteristics.colorProfile.hasBrownish) {
-      detectedSymptoms.push('brown spots');
-    }
-    if (characteristics && characteristics.colorProfile.hasYellowish) {
-      detectedSymptoms.push('leaf yellowing');
-    }
-    if (characteristics && characteristics.colorProfile.hasWhiteish) {
-      detectedSymptoms.push('white powder');
+    let result;
+    if (openAIAnalysis) {
+      result = mapOpenAIResultsToDiseases(openAIAnalysis);
     }
 
-    // If no symptoms detected, assume healthy
-    if (detectedSymptoms.length === 0) {
-      detectedSymptoms.push('green leaves', 'normal growth');
+    // Fallback to healthy if no match
+    if (!result) {
+      result = {
+        diseaseId: 'healthy',
+        disease: diseaseDatabase.healthy,
+        confidence: 85,
+      };
     }
-
-    // Detect disease
-    const result = detectDiseaseBySymptoms(detectedSymptoms, characteristics);
 
     return {
       diseaseId: result.diseaseId,
       diseaseName: result.disease.name,
       description: result.disease.description,
       confidence: result.confidence,
-      symptoms: result.disease.symptoms,
-      treatments: result.disease.treatments,
-      detectedSymptoms,
+      symptoms: result.disease.symptoms || [],
+      treatments: result.disease.treatments || [],
+      detectedSymptoms: openAIAnalysis?.symptoms || [],
       recommendations: generateRecommendations(result.disease),
+      openAIPowered: !!openAIAnalysis,
     };
   } catch (error) {
     console.error('Disease detection error:', error);
@@ -145,6 +206,7 @@ exports.detectDiseaseFromImage = async (imageUrl, cropType = 'potato') => {
       symptoms: [],
       treatments: [],
       recommendations: ['Please capture a clearer image of the affected area'],
+      openAIPowered: false,
     };
   }
 };
@@ -153,15 +215,17 @@ exports.detectDiseaseFromImage = async (imageUrl, cropType = 'potato') => {
 const generateRecommendations = (disease) => {
   const recommendations = [];
 
-  recommendations.push(`Primary treatment: ${disease.treatments[0] || 'Consult agricultural expert'}`);
-
-  if (disease.treatments.length > 1) {
-    recommendations.push(`Alternative: ${disease.treatments[1]}`);
+  if (disease.treatments && disease.treatments.length > 0) {
+    recommendations.push(`Primary treatment: ${disease.treatments[0]}`);
+    if (disease.treatments.length > 1) {
+      recommendations.push(`Alternative: ${disease.treatments[1]}`);
+    }
   }
 
   recommendations.push('Ensure proper ventilation and reduce humidity');
   recommendations.push('Remove affected leaves to prevent spread');
   recommendations.push('Monitor the plant regularly for progression');
+  recommendations.push('Consult local agricultural expert for personalized advice');
 
   return recommendations;
 };
@@ -169,7 +233,8 @@ const generateRecommendations = (disease) => {
 // Get treatment options for a disease
 exports.getTreatmentOptions = (diseaseId) => {
   const disease = diseaseDatabase[diseaseId];
-  if (!disease) return null;
+  if (!disease)
+    return null;
 
   return {
     diseaseName: disease.name,
