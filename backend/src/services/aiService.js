@@ -56,7 +56,7 @@ const diseaseDatabase = {
 // Analyze image using OpenAI Vision API
 const analyzeImageWithOpenAI = async (imageUrl) => {
   try {
-    if (!OPENAI_API_KEY) {
+    if (!OPENAI_API_KEY || OPENAI_API_KEY.includes('your_') || OPENAI_API_KEY === 'undefined') {
       console.warn('OpenAI API key not configured, falling back to local analysis');
       return null;
     }
@@ -116,7 +116,13 @@ Respond in JSON format with: {
     
     return null;
   } catch (error) {
-    console.error('OpenAI Vision API error:', error.response?.data || error.message);
+    if (error.response?.status === 401) {
+      console.warn('OpenAI API: Invalid or missing API key. Falling back to local disease detection.');
+    } else if (error.response?.status === 429) {
+      console.warn('OpenAI API: Rate limit exceeded. Falling back to local disease detection.');
+    } else {
+      console.warn('OpenAI Vision API error:', error.response?.data?.error?.message || error.message);
+    }
     return null;
   }
 };
@@ -165,6 +171,26 @@ const mapOpenAIResultsToDiseases = (openAIAnalysis) => {
   return bestMatch;
 };
 
+// Simple local disease detection fallback
+const detectDiseaseLocally = async (imageUrl) => {
+  try {
+    // Default heuristic when OpenAI is not available
+    // Returns a healthy plant by default (conservative approach)
+    return {
+      diseaseId: 'healthy',
+      disease: diseaseDatabase.healthy,
+      confidence: 60, // Lower confidence for local detection
+    };
+  } catch (error) {
+    console.error('Local disease detection error:', error);
+    return {
+      diseaseId: 'healthy',
+      disease: diseaseDatabase.healthy,
+      confidence: 50,
+    };
+  }
+};
+
 // Main disease detection function using OpenAI Vision API
 exports.detectDiseaseFromImage = async (imageUrl, cropType = 'crop') => {
   try {
@@ -176,13 +202,9 @@ exports.detectDiseaseFromImage = async (imageUrl, cropType = 'crop') => {
       result = mapOpenAIResultsToDiseases(openAIAnalysis);
     }
 
-    // Fallback to healthy if no match
+    // Fallback to local detection if OpenAI is not available or failed
     if (!result) {
-      result = {
-        diseaseId: 'healthy',
-        disease: diseaseDatabase.healthy,
-        confidence: 85,
-      };
+      result = await detectDiseaseLocally(imageUrl);
     }
 
     return {
@@ -195,18 +217,20 @@ exports.detectDiseaseFromImage = async (imageUrl, cropType = 'crop') => {
       detectedSymptoms: openAIAnalysis?.symptoms || [],
       recommendations: generateRecommendations(result.disease),
       openAIPowered: !!openAIAnalysis,
+      usingFallback: !openAIAnalysis,
     };
   } catch (error) {
     console.error('Disease detection error:', error);
     return {
       diseaseId: 'unknown',
-      diseaseName: 'Unable to detect',
-      description: 'Please try uploading a clearer image',
+      diseaseName: 'Disease detection unavailable',
+      description: 'Disease detection service is currently unavailable. Using local database.',
       confidence: 0,
       symptoms: [],
-      treatments: [],
-      recommendations: ['Please capture a clearer image of the affected area'],
+      treatments: ['Please contact support or try again later'],
+      recommendations: ['Please capture a clearer image of the affected area', 'Consider consulting with a local agricultural expert'],
       openAIPowered: false,
+      usingFallback: true,
     };
   }
 };
