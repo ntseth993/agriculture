@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CropVerificationComponent } from '../components/CropVerificationComponent';
 import { ImageUploadComponent } from '../components/ImageUploadComponent';
+import { ThemeToggle } from '../components/ThemeToggle';
 import { diseaseService, treatmentService } from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -12,6 +14,7 @@ export const CropVerificationPage = () => {
   const [loading, setLoading] = useState(false);
   const [detection, setDetection] = useState(null);
   const [treatments, setTreatments] = useState([]);
+  const navigate = useNavigate();
 
   const handleVerified = async (data) => {
     setVerifiedCrop(data.crop);
@@ -82,24 +85,35 @@ export const CropVerificationPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold text-gray-800 mb-2">Crop Health Advisory</h1>
-        <p className="text-gray-600 mb-8">Verify your crop and detect diseases in two easy steps</p>
+        {/* Header with Back Button and Theme Toggle */}
+        <div className="flex justify-between items-center mb-8">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center gap-2"
+          >
+            <span>←</span> Back
+          </button>
+          <ThemeToggle />
+        </div>
+
+        <h1 className="text-4xl font-bold text-gray-800 dark:text-white mb-2">Crop Health Advisory</h1>
+        <p className="text-gray-600 dark:text-gray-300 mb-8">Verify your crop and detect diseases in two easy steps</p>
 
         {/* Progress Indicators */}
         <div className="flex gap-4 mb-8">
-          <div className={`flex-1 p-4 rounded-lg text-center font-semibold ${
+          <div className={`flex-1 p-4 rounded-lg text-center font-semibold transition-colors ${
             verificationStep === 'verify' 
               ? 'bg-blue-500 text-white' 
-              : 'bg-gray-300 text-gray-800'
+              : 'bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-300'
           }`}>
             Step 1: Verify Crop
           </div>
-          <div className={`flex-1 p-4 rounded-lg text-center font-semibold ${
+          <div className={`flex-1 p-4 rounded-lg text-center font-semibold transition-colors ${
             verificationStep === 'detect' 
               ? 'bg-blue-500 text-white' 
-              : 'bg-gray-300 text-gray-800'
+              : 'bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-300'
           }`}>
             Step 2: Detect Disease
           </div>
@@ -112,27 +126,27 @@ export const CropVerificationPage = () => {
           <div className="space-y-6">
             {/* Verification Summary */}
             {verifiedCrop && verificationData && (
-              <div className="bg-green-50 border-2 border-green-500 rounded-lg p-6">
-                <h2 className="text-2xl font-bold text-green-700 mb-4">✓ Crop Verified</h2>
+              <div className="bg-green-50 dark:bg-gray-800 border-2 border-green-500 rounded-lg p-6">
+                <h2 className="text-2xl font-bold text-green-700 dark:text-green-400 mb-4">✓ Crop Verified</h2>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-600">Crop Type</p>
-                    <p className="text-lg font-semibold">{verifiedCrop.name}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Crop Type</p>
+                    <p className="text-lg font-semibold text-gray-800 dark:text-white">{verifiedCrop.name}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Verification Confidence</p>
-                    <p className="text-lg font-semibold">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Verification Confidence</p>
+                    <p className="text-lg font-semibold text-gray-800 dark:text-white">
                       {(verificationData.confidence * 100).toFixed(1)}%
                     </p>
                   </div>
                   <div className="md:col-span-2">
-                    <p className="text-sm text-gray-600">Scientific Name</p>
-                    <p className="text-gray-800">{verifiedCrop.scientificName}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Scientific Name</p>
+                    <p className="text-gray-800 dark:text-gray-200">{verifiedCrop.scientificName}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setVerificationStep('verify')}
-                  className="mt-4 text-blue-500 hover:text-blue-700 font-semibold"
+                  className="mt-4 text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold"
                 >
                   ← Verify Different Crop
                 </button>
@@ -140,8 +154,8 @@ export const CropVerificationPage = () => {
             )}
 
             {/* Disease Detection */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">Step 2: Detect Disease</h2>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">Step 2: Detect Disease</h2>
 
               <ImageUploadComponent onImageCapture={handleImageCapture} />
 

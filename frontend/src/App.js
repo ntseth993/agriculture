@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { ProtectedRoute } from './utils/ProtectedRoute';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
@@ -14,47 +15,49 @@ import { Toaster } from 'react-hot-toast';
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/detect"
-            element={
-              <ProtectedRoute>
-                <DiseaseDetectionPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/verify"
-            element={
-              <ProtectedRoute>
-                <CropVerificationPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/locations"
-            element={
-              <ProtectedRoute>
-                <LocationPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-        <Toaster position="top-right" />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/detect"
+              element={
+                <ProtectedRoute>
+                  <DiseaseDetectionPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/verify"
+              element={
+                <ProtectedRoute>
+                  <CropVerificationPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/locations"
+              element={
+                <ProtectedRoute>
+                  <LocationPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+          <Toaster position="top-right" />
+        </AuthProvider>
+      </ThemeProvider>
     </Router>
   );
 }

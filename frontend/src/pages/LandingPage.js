@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaLeaf, FaCamera, FaMapMarkerAlt, FaBell, FaStar, FaQuoteLeft, FaArrowRight, FaTractor, FaShieldAlt, FaHeadset } from 'react-icons/fa';
+import { ThemeToggle } from '../components/ThemeToggle';
 
 export const LandingPage = () => {
   const navigate = useNavigate();
@@ -63,18 +64,19 @@ export const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white overflow-hidden">
+    <div className="min-h-screen bg-white dark:bg-gray-900 overflow-hidden">
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-white shadow-lg border-b-4 border-green-500">
+      <nav className="sticky top-0 z-50 bg-white dark:bg-gray-800 shadow-lg border-b-4 border-green-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3 cursor-pointer hover:scale-105 transition">
             <FaLeaf className="text-4xl text-green-500 animate-pulse" />
             <span className="text-3xl font-bold bg-gradient-to-r from-green-500 to-blue-600 bg-clip-text text-transparent">CropHealth</span>
           </div>
-          <div className="flex gap-4">
+          <div className="flex gap-4 items-center">
+            <ThemeToggle />
             <button
               onClick={() => navigate('/login')}
-              className="px-6 py-2 text-gray-700 font-semibold hover:text-green-500 hover:bg-green-50 rounded-lg transition duration-300"
+              className="px-6 py-2 text-gray-700 dark:text-gray-300 font-semibold hover:text-green-500 hover:bg-green-50 dark:hover:bg-gray-700 rounded-lg transition duration-300"
             >
               Login
             </button>
@@ -89,17 +91,17 @@ export const LandingPage = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-green-50 via-white to-blue-50 py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <section className="bg-gradient-to-br from-green-50 via-white to-blue-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-20 left-10 w-72 h-72 bg-green-400 rounded-full mix-blend-multiply filter blur-3xl"></div>
           <div className="absolute top-40 right-10 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl"></div>
         </div>
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center relative z-10">
           <div>
-            <h1 className="text-6xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight">
+            <h1 className="text-6xl md:text-7xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
               Protect Your <span className="bg-gradient-to-r from-green-500 to-blue-600 bg-clip-text text-transparent">Crops with</span> Smart Technology
             </h1>
-            <p className="text-xl text-gray-600 mb-8 leading-relaxed font-medium">
+            <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 leading-relaxed font-medium">
               Detect crop diseases early, get expert recommendations instantly, and connect with local agro vets and pharmacies. All in one powerful platform designed for modern farming.
             </p>
             <div className="flex gap-4 flex-wrap">
@@ -111,19 +113,19 @@ export const LandingPage = () => {
               </button>
               <button
                 onClick={() => navigate('/login')}
-                className="px-8 py-4 border-3 border-green-500 text-green-600 rounded-lg font-bold text-lg hover:bg-green-50 hover:shadow-lg transition"
+                className="px-8 py-4 border-3 border-green-500 text-green-600 dark:text-green-400 rounded-lg font-bold text-lg hover:bg-green-50 dark:hover:bg-gray-800 hover:shadow-lg transition"
               >
                 Watch Demo
               </button>
             </div>
-            <p className="text-sm text-gray-500 mt-6">✓ Free for first 100 users • ✓ No credit card required • ✓ Works on any device</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-6">✓ Free for first 100 users • ✓ No credit card required • ✓ Works on any device</p>
           </div>
           <div className="relative">
             <div className="bg-gradient-to-br from-green-400 via-green-300 to-blue-500 rounded-3xl p-1 shadow-2xl hover:shadow-3xl transition">
-              <div className="bg-white rounded-3xl p-8 h-96 flex flex-col items-center justify-center">
+              <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 h-96 flex flex-col items-center justify-center">
                 <FaCamera className="text-8xl text-green-500 mb-4 animate-bounce" />
-                <p className="text-2xl font-bold text-gray-800 text-center">Snap & Analyze</p>
-                <p className="text-lg text-gray-600 text-center mt-2">Get disease detection in seconds</p>
+                <p className="text-2xl font-bold text-gray-800 dark:text-white text-center">Snap & Analyze</p>
+                <p className="text-lg text-gray-600 dark:text-gray-400 text-center mt-2">Get disease detection in seconds</p>
               </div>
             </div>
             <img 
@@ -136,13 +138,13 @@ export const LandingPage = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
-            <h2 className="text-5xl font-bold text-gray-900 mb-4">
+            <h2 className="text-5xl font-bold text-gray-900 dark:text-white mb-4">
               Powerful Features for <span className="bg-gradient-to-r from-green-500 to-blue-600 bg-clip-text text-transparent">Modern Farming</span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
               Everything you need to manage crop health efficiently and maximize your yield
             </p>
           </div>

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { locationService } from '../services/api';
 import { MapComponent } from '../components/MapComponent';
+import { ThemeToggle } from '../components/ThemeToggle';
 import toast from 'react-hot-toast';
 
 export const LocationPage = () => {
@@ -14,6 +16,7 @@ export const LocationPage = () => {
   const [showSuggestionMode, setShowSuggestionMode] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
 
   const fetchNearby = useCallback(async (lat, lng) => {
     try {
@@ -123,20 +126,32 @@ export const LocationPage = () => {
   const center = Array.isArray(mapCenter) ? mapCenter : [mapCenter.latitude, mapCenter.longitude];
 
   return (
-    <div style={{ display: 'flex', height: '100vh', backgroundColor: '#fff' }}>
+    <div style={{ display: 'flex', height: '100vh' }}>
+      {/* Header with Back Button and Theme Toggle */}
+      <div className="fixed top-4 left-4 z-50 flex gap-2">
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="px-4 py-2 bg-white dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg font-semibold hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center gap-2 shadow-lg"
+        >
+          <span>←</span> Back
+        </button>
+        <ThemeToggle />
+      </div>
+
       {/* Left Sidebar */}
       <div
         style={{
           width: '380px',
           display: 'flex',
           flexDirection: 'column',
-          backgroundColor: '#fff',
+          backgroundColor: 'var(--bg-color)',
           borderRight: '1px solid #e0e0e0',
           overflowY: 'auto',
         }}
+        className="dark:bg-gray-800 dark:border-gray-700"
       >
         {/* Search Box */}
-        <div style={{ padding: '15px', backgroundColor: '#f8f9fa', borderBottom: '1px solid #e0e0e0' }}>
+        <div style={{ padding: '15px', backgroundColor: '#f8f9fa', borderBottom: '1px solid #e0e0e0' }} className="dark:bg-gray-700 dark:border-gray-600">
           <div
             style={{
               display: 'flex',
@@ -147,6 +162,7 @@ export const LocationPage = () => {
               padding: '10px 15px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
             }}
+            className="dark:bg-gray-600 dark:border-gray-500"
           >
             <span style={{ fontSize: '18px', marginRight: '10px' }}>🔍</span>
             <input
@@ -161,21 +177,22 @@ export const LocationPage = () => {
                 fontSize: '14px',
                 fontFamily: 'system-ui, sans-serif',
               }}
+              className="dark:bg-gray-600 dark:text-white"
             />
           </div>
         </div>
 
         {/* Location Info */}
         {userLocation && (
-          <div style={{ padding: '15px', backgroundColor: '#f0f8ff', borderBottom: '1px solid #e0e0e0' }}>
-            <div style={{ fontSize: '12px', color: '#666', marginBottom: '8px' }}>📍 Your Location</div>
-            <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '10px' }}>
+          <div style={{ padding: '15px', backgroundColor: '#f0f8ff', borderBottom: '1px solid #e0e0e0' }} className="dark:bg-gray-700 dark:border-gray-600">
+            <div style={{ fontSize: '12px', color: '#666', marginBottom: '8px' }} className="dark:text-gray-400">📍 Your Location</div>
+            <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '10px' }} className="dark:text-white">
               ({userLocation.latitude.toFixed(4)}, {userLocation.longitude.toFixed(4)})
             </div>
             
             {/* Radius Slider */}
             <div style={{ marginBottom: '12px' }}>
-              <label style={{ fontSize: '12px', color: '#666', display: 'block', marginBottom: '6px' }}>
+              <label style={{ fontSize: '12px', color: '#666', display: 'block', marginBottom: '6px' }} className="dark:text-gray-400">
                 Search Radius: {radius} km
               </label>
               <input
