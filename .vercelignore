@@ -8,6 +8,6 @@ npm-debug.log*
 out
 .vercel
 *.pem
-frontend/build/.map files
+frontend/build/**/*.map
 .gitignore
 README.md
