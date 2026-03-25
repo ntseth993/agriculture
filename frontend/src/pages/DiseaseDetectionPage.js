@@ -7,8 +7,8 @@ import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { useLanguage } from '../context/LanguageContext';
 import { diseaseService } from '../services/api';
 import {
-  FiCamera, FiUpload, FiCheckCircle, FiAlertTriangle, FiActivity,
-  FiZap, FiTarget, FiTrendingUp, FiRefreshCw, FiMapPin, FiClock,
+  FiUpload, FiCheckCircle, FiActivity,
+  FiZap, FiTarget, FiRefreshCw, FiMapPin, FiClock,
   FiThermometer, FiDroplet, FiSun, FiAlertCircle, FiArrowLeft,
   FiCpu, FiShield, FiChevronRight
 } from 'react-icons/fi';
@@ -41,7 +41,6 @@ const colorMap = {
 
 export const DiseaseDetectionPage = () => {
   const { language, t } = useLanguage();
-  const [image, setImage]                     = useState(null);
   const [cropId, setCropId]                   = useState('');
   const [notACropError, setNotACropError]     = useState(null);
   const [loading, setLoading]                 = useState(false);
@@ -71,7 +70,6 @@ export const DiseaseDetectionPage = () => {
   }, []);
 
   const handleImageCapture = async (imageData) => {
-    setImage(imageData);
     await analyzeImage(imageData);
   };
 
@@ -140,7 +138,6 @@ export const DiseaseDetectionPage = () => {
 
   const handleRetry = () => {
     setDetection(null);
-    setImage(null);
     setNotACropError(null);
   };
 

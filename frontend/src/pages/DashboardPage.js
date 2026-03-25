@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
@@ -6,13 +6,12 @@ import { motion } from 'framer-motion';
 import { AlertsPanel } from '../components/AlertsPanel';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { FaLeaf, FaCamera, FaMapMarkerAlt, FaBell, FaChartLine, FaRobot } from 'react-icons/fa';
-import { FiLogOut, FiMenu, FiX, FiUser, FiChevronRight, FiShield } from 'react-icons/fi';
+import { FiLogOut, FiChevronRight, FiShield } from 'react-icons/fi';
 
 export const DashboardPage = () => {
   const { user, logout } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
 
   const quickActions = [
     {

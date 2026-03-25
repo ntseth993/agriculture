@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FaLeaf, FaCamera, FaMapMarkerAlt, FaBell, FaStar, FaQuoteLeft,
-  FaArrowRight, FaTractor, FaShieldAlt, FaHeadset, FaChartLine,
-  FaSeedling, FaBug, FaRobot, FaCheckCircle, FaPlay, FaTimes
+  FaArrowRight, FaTractor, FaShieldAlt, FaHeadset,
+  FaSeedling, FaRobot, FaCheckCircle, FaPlay, FaTimes
 } from 'react-icons/fa';
 import { FiMenu, FiChevronRight, FiShield, FiZap, FiTarget, FiTrendingUp, FiUsers } from 'react-icons/fi';
 import { ThemeToggle } from '../components/ThemeToggle';
@@ -517,7 +517,7 @@ export const LandingPage = () => {
           <p className="text-white/35 text-sm">© 2026 CropHealth AI. All rights reserved.</p>
           <div className="flex gap-5">
             {['Privacy', 'Terms', 'Contact'].map((item) => (
-              <a key={item} href="#" className="text-white/40 hover:text-white/70 text-sm transition-colors">{item}</a>
+              <button key={item} className="text-white/40 hover:text-white/70 text-sm transition-colors">{item}</button>
             ))}
           </div>
         </div>

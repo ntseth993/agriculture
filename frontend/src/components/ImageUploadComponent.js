@@ -1,6 +1,6 @@
 import React, { useRef, useState, useCallback } from 'react';
 import Webcam from 'react-webcam';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { FiCamera, FiUpload, FiX, FiRefreshCw, FiCheck } from 'react-icons/fi';
 
 export const ImageUploadComponent = ({ onImageCapture }) => {
@@ -31,12 +31,7 @@ export const ImageUploadComponent = ({ onImageCapture }) => {
     setActiveTab('upload');
   };
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    processFile(file);
-  };
-
-  const processFile = (file) => {
+  const processFile = useCallback((file) => {
     if (!file) return;
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -44,6 +39,11 @@ export const ImageUploadComponent = ({ onImageCapture }) => {
       onImageCapture(file);
     };
     reader.readAsDataURL(file);
+  }, [onImageCapture]);
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    processFile(file);
   };
 
   const handleDrop = useCallback((e) => {
@@ -53,7 +53,7 @@ export const ImageUploadComponent = ({ onImageCapture }) => {
     if (file && file.type.startsWith('image/')) {
       processFile(file);
     }
-  }, []);
+  }, [processFile]);
 
   const handleDragOver = useCallback((e) => {
     e.preventDefault();

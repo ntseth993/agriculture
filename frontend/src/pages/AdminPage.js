@@ -6,7 +6,6 @@ import { useLanguage } from '../context/LanguageContext';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { FiUsers, FiShield, FiTrash2, FiSearch, FiArrowLeft, FiRefreshCw, FiUserCheck, FiUserX } from 'react-icons/fi';
-import { FaLeaf } from 'react-icons/fa';
 
 const apiClient = axios.create({ baseURL: '' });
 apiClient.interceptors.request.use(cfg => {
@@ -33,7 +32,6 @@ export const AdminPage = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [filterRole, setFilterRole] = useState('');
-  const [activeTab, setActiveTab] = useState('users');
 
   const fetchStats = useCallback(async () => {
     try {

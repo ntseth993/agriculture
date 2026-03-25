@@ -79,13 +79,13 @@ export const SocialLoginCard = ({ title, description, children }) => {
       <div className="mt-6 text-center">
         <p className="text-sm text-gray-500 dark:text-gray-400">
           By continuing, you agree to our{' '}
-          <a href="#" className="text-green-600 dark:text-green-400 hover:underline">
+          <span className="text-green-600 dark:text-green-400">
             Terms of Service
-          </a>{' '}
+          </span>{' '}
           and{' '}
-          <a href="#" className="text-green-600 dark:text-green-400 hover:underline">
+          <span className="text-green-600 dark:text-green-400">
             Privacy Policy
-          </a>
+          </span>
         </p>
       </div>
     </motion.div>
