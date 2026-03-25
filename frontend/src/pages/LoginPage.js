@@ -106,15 +106,17 @@ export const LoginPage = () => {
 
             {/* Google Sign In Button */}
             <div className="mb-6">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={() => toast.error('Google sign-in was cancelled or failed.')}
-                theme="filled_black"
-                shape="rectangular"
-                size="large"
-                width="100%"
-                text="signin_with"
-              />
+              <div className="w-full [&>div]:!w-full [&>div>div>iframe]:!w-full">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => toast.error('Google sign-in was cancelled or failed.')}
+                  theme="filled_black"
+                  shape="rectangular"
+                  size="large"
+                  width="448"
+                  text="signin_with"
+                />
+              </div>
             </div>
 
             <div className="flex items-center gap-4 mb-6">
@@ -151,6 +153,7 @@ export const LoginPage = () => {
                     required
                     className="w-full pl-10 pr-11 py-3 bg-white/5 border border-white/15 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50 text-white placeholder-white/25 text-sm transition-all"
                     placeholder="Enter your password"
+                    autoComplete="current-password"
                   />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/35 hover:text-white/70 transition-colors">
                     {showPassword ? <FaEyeSlash className="text-sm" /> : <FaEye className="text-sm" />}

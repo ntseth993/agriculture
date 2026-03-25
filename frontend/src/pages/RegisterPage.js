@@ -102,15 +102,17 @@ export const RegisterPage = () => {
 
             {/* Google Sign Up */}
             <div className="mb-5">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={() => toast.error('Google sign-up was cancelled or failed.')}
-                theme="filled_black"
-                shape="rectangular"
-                size="large"
-                width="100%"
-                text="signup_with"
-              />
+              <div className="w-full [&>div]:!w-full [&>div>div>iframe]:!w-full">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => toast.error('Google sign-up was cancelled or failed.')}
+                  theme="filled_black"
+                  shape="rectangular"
+                  size="large"
+                  width="448"
+                  text="signup_with"
+                />
+              </div>
             </div>
 
             <div className="flex items-center gap-4 mb-5">
@@ -164,7 +166,7 @@ export const RegisterPage = () => {
                 <label className="block text-xs font-medium text-white/65 mb-1.5">Password *</label>
                 <div className="relative">
                   <FiLock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/35 text-sm" />
-                  <input type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onChange={handleChange} required className={`${inputClass} pl-10 pr-11`} placeholder="At least 6 characters" />
+                  <input type={showPassword ? 'text' : 'password'} name="password" autoComplete="new-password" value={formData.password} onChange={handleChange} required className={`${inputClass} pl-10 pr-11`} placeholder="At least 6 characters" />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/35 hover:text-white/70 transition-colors">
                     {showPassword ? <FaEyeSlash className="text-sm" /> : <FaEye className="text-sm" />}
                   </button>
@@ -175,7 +177,7 @@ export const RegisterPage = () => {
                 <label className="block text-xs font-medium text-white/65 mb-1.5">Confirm Password *</label>
                 <div className="relative">
                   <FiLock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/35 text-sm" />
-                  <input type={showConfirm ? 'text' : 'password'} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required className={`${inputClass} pl-10 pr-11`} placeholder="Repeat your password" />
+                  <input type={showConfirm ? 'text' : 'password'} name="confirmPassword" autoComplete="new-password" value={formData.confirmPassword} onChange={handleChange} required className={`${inputClass} pl-10 pr-11`} placeholder="Repeat your password" />
                   <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/35 hover:text-white/70 transition-colors">
                     {showConfirm ? <FaEyeSlash className="text-sm" /> : <FaEye className="text-sm" />}
                   </button>
