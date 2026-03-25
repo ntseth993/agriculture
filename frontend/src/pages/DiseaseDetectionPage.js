@@ -1,79 +1,73 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ImageUploadComponent } from '../components/ImageUploadComponent';
 import { CropVerificationPanel } from '../components/CropVerificationPanel';
-import { ThemeToggle } from '../components/ThemeToggle';
-import { Card, StatCard } from '../components/Card';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { useLanguage } from '../context/LanguageContext';
 import { diseaseService } from '../services/api';
-import { FiCamera, FiUpload, FiCheckCircle, FiAlertTriangle, FiInfo, FiActivity, FiZap, FiTarget, FiTrendingUp, FiRefreshCw, FiMapPin, FiClock, FiThermometer, FiDroplet, FiSun, FiAlertCircle } from 'react-icons/fi';
+import {
+  FiCamera, FiUpload, FiCheckCircle, FiAlertTriangle, FiActivity,
+  FiZap, FiTarget, FiTrendingUp, FiRefreshCw, FiMapPin, FiClock,
+  FiThermometer, FiDroplet, FiSun, FiAlertCircle, FiArrowLeft,
+  FiCpu, FiShield, FiChevronRight
+} from 'react-icons/fi';
 import toast from 'react-hot-toast';
+
+const SUPPORTED_CROPS = [
+  { id: 'wheat',     name: 'Wheat',     icon: '🌾', confidence: 94 },
+  { id: 'rice',      name: 'Rice',      icon: '🍚', confidence: 92 },
+  { id: 'corn',      name: 'Corn',      icon: '🌽', confidence: 95 },
+  { id: 'tomato',    name: 'Tomato',    icon: '🍅', confidence: 96 },
+  { id: 'potato',    name: 'Potato',    icon: '🥔', confidence: 93 },
+  { id: 'cotton',    name: 'Cotton',    icon: '🌿', confidence: 91 },
+  { id: 'sugarcane', name: 'Sugarcane', icon: '🎋', confidence: 89 },
+  { id: 'soybean',   name: 'Soybean',   icon: '🫘', confidence: 90 },
+];
+
+const STATS = [
+  { icon: FiTarget,    label: 'Accuracy',      value: '95%+',  color: 'emerald' },
+  { icon: FiActivity,  label: 'Crops',         value: '50+',   color: 'blue'    },
+  { icon: FiClock,     label: 'Analysis',      value: '< 3s',  color: 'violet'  },
+  { icon: FiShield,    label: 'Success Rate',  value: '98%',   color: 'rose'    },
+];
+
+const colorMap = {
+  emerald: { bg: 'bg-emerald-500/15', border: 'border-emerald-500/25', icon: 'text-emerald-400', text: 'text-emerald-300' },
+  blue:    { bg: 'bg-blue-500/15',    border: 'border-blue-500/25',    icon: 'text-blue-400',    text: 'text-blue-300'    },
+  violet:  { bg: 'bg-violet-500/15',  border: 'border-violet-500/25',  icon: 'text-violet-400',  text: 'text-violet-300'  },
+  rose:    { bg: 'bg-rose-500/15',    border: 'border-rose-500/25',    icon: 'text-rose-400',    text: 'text-rose-300'    },
+};
 
 export const DiseaseDetectionPage = () => {
   const { language, t } = useLanguage();
-  const [image, setImage] = useState(null);
-  const [cropId, setCropId] = useState('');
-  const [notACropError, setNotACropError] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [detection, setDetection] = useState(null);
+  const [image, setImage]                     = useState(null);
+  const [cropId, setCropId]                   = useState('');
+  const [notACropError, setNotACropError]     = useState(null);
+  const [loading, setLoading]                 = useState(false);
+  const [detection, setDetection]             = useState(null);
   const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [analysisStep, setAnalysisStep]       = useState(0);
   const [detectionHistory, setDetectionHistory] = useState([]);
   const [environmentalData, setEnvironmentalData] = useState(null);
-  const [aiConfidence, setAiConfidence] = useState(0);
+  const [aiConfidence, setAiConfidence]       = useState(0);
   const navigate = useNavigate();
-  const fileInputRef = useRef(null);
 
-  const supportedCrops = [
-    { id: 'wheat', name: 'Wheat', icon: '🌾', diseases: 45, confidence: 94 },
-    { id: 'rice', name: 'Rice', icon: '🍚', diseases: 38, confidence: 92 },
-    { id: 'corn', name: 'Corn', icon: '🌽', diseases: 52, confidence: 95 },
-    { id: 'tomato', name: 'Tomato', icon: '🍅', diseases: 67, confidence: 96 },
-    { id: 'potato', name: 'Potato', icon: '🥔', diseases: 41, confidence: 93 },
-    { id: 'cotton', name: 'Cotton', icon: '🌿', diseases: 35, confidence: 91 },
-    { id: 'sugarcane', name: 'Sugarcane', icon: '🎋', diseases: 28, confidence: 89 },
-    { id: 'soybean', name: 'Soybean', icon: '🫘', diseases: 39, confidence: 90 },
-  ];
+  const analysisSteps = ['Loading image…', 'Extracting features…', 'Running AI model…', 'Generating report…'];
 
-  const supportedLanguages = {
-    en: 'English',
-    hi: 'Hindi',
-    es: 'Spanish',
-    fr: 'French',
-    pt: 'Portuguese',
-    zh: 'Chinese (Simplified)',
-    ja: 'Japanese',
-    ar: 'Arabic',
-  };
-
-  // Simulate environmental data fetching
   useEffect(() => {
-    const fetchEnvironmentalData = async () => {
-      try {
-        // Get user location
-        const position = await new Promise((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject);
+    navigator.geolocation?.getCurrentPosition(
+      (pos) => {
+        setEnvironmentalData({
+          temperature: Math.floor(Math.random() * 15) + 20,
+          humidity:    Math.floor(Math.random() * 40) + 40,
+          rainfall:    Math.floor(Math.random() * 50),
+          sunlight:    Math.floor(Math.random() * 8) + 4,
+          location:    { latitude: pos.coords.latitude, longitude: pos.coords.longitude },
         });
-        
-        // Simulate environmental data based on location
-        const mockData = {
-          temperature: Math.floor(Math.random() * 15) + 20, // 20-35°C
-          humidity: Math.floor(Math.random() * 40) + 40, // 40-80%
-          rainfall: Math.floor(Math.random() * 50), // 0-50mm
-          sunlight: Math.floor(Math.random() * 8) + 4, // 4-12 hours
-          location: {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          }
-        };
-        setEnvironmentalData(mockData);
-      } catch (error) {
-        console.log('Location or environmental data not available');
-      }
-    };
-
-    fetchEnvironmentalData();
+      },
+      () => {}
+    );
   }, []);
 
   const handleImageCapture = async (imageData) => {
@@ -83,7 +77,7 @@ export const DiseaseDetectionPage = () => {
 
   const analyzeImage = async (imageData) => {
     if (!cropId) {
-      toast.error(t('selectCrop'));
+      toast.error('Please select a crop type first.');
       return;
     }
 
@@ -93,71 +87,54 @@ export const DiseaseDetectionPage = () => {
       setNotACropError(null);
       setAnalysisProgress(0);
       setAiConfidence(0);
+      setAnalysisStep(0);
 
-      // Simulate AI analysis progress
       const progressInterval = setInterval(() => {
         setAnalysisProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + 10;
+          if (prev >= 88) { clearInterval(progressInterval); return 88; }
+          return prev + 8;
         });
-      }, 200);
+        setAnalysisStep(prev => Math.min(prev + 1, analysisSteps.length - 1));
+      }, 350);
 
-      // Get user location
-      let latitude = 0;
-      let longitude = 0;
-
+      let latitude = 0, longitude = 0;
       try {
-        const position = await new Promise((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject);
-        });
-        latitude = position.coords.latitude;
-        longitude = position.coords.longitude;
-      } catch (e) {
-        console.log('Location not available, using default coordinates');
-      }
+        const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
+        latitude  = pos.coords.latitude;
+        longitude = pos.coords.longitude;
+      } catch {}
 
-      // Enhanced AI analysis with multiple models
-      const result = await diseaseService.detectDisease(
-        imageData,
-        cropId,
-        latitude,
-        longitude,
-        language
-      );
+      const result = await diseaseService.detectDisease(imageData, cropId, latitude, longitude, language);
+      clearInterval(progressInterval);
 
-      // Simulate AI confidence calculation
-      const confidence = Math.floor(Math.random() * 15) + 85; // 85-99%
+      const confidence = Math.floor(Math.random() * 15) + 85;
       setAiConfidence(confidence);
       setAnalysisProgress(100);
 
-      // Add to detection history
-      const historyItem = {
-        id: Date.now(),
-        timestamp: new Date(),
-        crop: supportedCrops.find(c => c.id === cropId)?.name || cropId,
-        result: result.detection,
-        confidence,
-        image: imageData
-      };
-      setDetectionHistory(prev => [historyItem, ...prev].slice(0, 5));
+      setDetectionHistory(prev => [
+        {
+          id:         Date.now(),
+          timestamp:  new Date(),
+          crop:       SUPPORTED_CROPS.find(c => c.id === cropId)?.name || cropId,
+          confidence,
+        },
+        ...prev,
+      ].slice(0, 5));
 
       setDetection(result.detection);
-      toast.success(`Disease analysis complete! AI Confidence: ${confidence}% 🎯`);
+      toast.success(`Analysis complete — ${confidence}% confidence`);
     } catch (error) {
-      console.error('Analysis error:', error);
       const errData = error?.response?.data || error;
       if (errData?.notACrop) {
         setNotACropError(errData.message || 'The image does not appear to be a crop.');
-        toast.error(t('notACrop'));
+        toast.error('Not a crop image. Please upload a plant photo.');
       } else {
         toast.error(errData?.message || 'Analysis failed. Please try again.');
       }
     } finally {
       setLoading(false);
       setAnalysisProgress(0);
+      setAnalysisStep(0);
     }
   };
 
@@ -168,411 +145,375 @@ export const DiseaseDetectionPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-900 via-green-800 to-teal-900 relative overflow-hidden">
-      {/* Animated Background */}
-      <div className="absolute inset-0">
-        {[...Array(25)].map((_, i) => (
-          <div
-            key={`bg-particle-${i}`}
-            className="absolute w-1 h-1 bg-white rounded-full opacity-20"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-          />
-        ))}
-        
-        {/* Large Animated Orbs */}
-        <motion.div 
-          className="absolute top-20 left-10 w-96 h-96 bg-gradient-to-br from-emerald-400/10 to-teal-600/10 rounded-full blur-3xl"
-          animate={{ 
-            x: [0, 30, 0],
-            y: [0, -20, 0],
-            scale: [1, 1.1, 1]
+    <div className="min-h-screen bg-[#0a0f0d] relative overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-3xl" />
+        <div
+          className="absolute inset-0 opacity-[0.015]"
+          style={{
+            backgroundImage: 'linear-gradient(rgba(255,255,255,.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.4) 1px, transparent 1px)',
+            backgroundSize: '48px 48px',
           }}
-          transition={{ duration: 15, repeat: Infinity, repeatType: 'reverse' }}
-        />
-        <motion.div 
-          className="absolute bottom-20 right-10 w-80 h-80 bg-gradient-to-br from-blue-400/10 to-indigo-600/10 rounded-full blur-3xl"
-          animate={{ 
-            x: [0, -30, 0],
-            y: [0, 20, 0],
-            scale: [1, 1.2, 1]
-          }}
-          transition={{ duration: 20, repeat: Infinity, repeatType: 'reverse' }}
         />
       </div>
 
-      <div className="relative z-10">
+      <div className="relative z-10 flex flex-col min-h-screen">
         {/* Header */}
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass border-b border-white/20"
-        >
-          <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <motion.button
-              onClick={() => navigate('/dashboard')}
-              className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md text-white rounded-lg font-semibold hover:bg-white/20 transition-colors border border-white/20"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <span>←</span> Back to Dashboard
-            </motion.button>
-            
+        <header className="border-b border-white/8 bg-white/3 backdrop-blur-xl sticky top-0 z-20">
+          <div className="max-w-7xl mx-auto px-6 py-3.5 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <motion.button
+                onClick={() => navigate('/dashboard')}
+                className="flex items-center gap-2 text-white/60 hover:text-white text-sm font-medium transition-colors"
+                whileHover={{ x: -2 }}
+              >
+                <FiArrowLeft size={16} />
+                Dashboard
+              </motion.button>
+              <span className="text-white/20">|</span>
+              <span className="text-white/90 text-sm font-semibold">Disease Detection</span>
+            </div>
+
             <div className="flex items-center gap-3">
               <LanguageSwitcher compact />
-              <div className="text-white/80 text-sm hidden sm:flex items-center">
-                <FiZap className="inline mr-1" />
-                AI-Powered Detection
+              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/15 border border-emerald-500/25 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-emerald-300 text-xs font-semibold">AI Ready</span>
               </div>
             </div>
           </div>
-        </motion.div>
+        </header>
 
-        <div className="max-w-7xl mx-auto p-4 py-8">
-          {/* Hero Section */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+        <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-8">
+          {/* Page Title */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-8"
+            className="mb-8"
           >
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              AI-Powered Crop Disease Detection
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 tracking-tight">
+              Crop Disease Detection
             </h1>
-            <p className="text-xl text-white/80 max-w-2xl mx-auto">
-              Advanced machine learning analyzes your crop images with 95%+ accuracy for instant disease detection and treatment recommendations
+            <p className="text-white/50 text-base">
+              Upload a photo of your crop and our AI will identify diseases with treatment recommendations.
             </p>
           </motion.div>
 
-          {/* Stats Cards */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+          {/* Stat Strip */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="grid md:grid-cols-4 gap-6 mb-8"
+            transition={{ delay: 0.1 }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8"
           >
-            <StatCard
-              icon={<FiTarget />}
-              title="Detection Accuracy"
-              value="95%+"
-              change="+3%"
-              trend="up"
-              color="green"
-            />
-            <StatCard
-              icon={<FiActivity />}
-              title="Crops Supported"
-              value="50+"
-              change="+8"
-              trend="up"
-              color="blue"
-            />
-            <StatCard
-              icon={<FiClock />}
-              title="Analysis Time"
-              value="< 3s"
-              change="-1s"
-              trend="up"
-              color="yellow"
-            />
-            <StatCard
-              icon={<FiTrendingUp />}
-              title="Success Rate"
-              value="98%"
-              change="+2%"
-              trend="up"
-              color="green"
-            />
+            {STATS.map(({ icon: Icon, label, value, color }, i) => {
+              const c = colorMap[color];
+              return (
+                <div key={label} className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border ${c.bg} ${c.border}`}>
+                  <div className={`p-2 rounded-xl bg-white/5`}>
+                    <Icon className={c.icon} size={17} />
+                  </div>
+                  <div>
+                    <div className="text-white font-bold text-lg leading-none mb-0.5">{value}</div>
+                    <div className="text-white/45 text-xs">{label}</div>
+                  </div>
+                </div>
+              );
+            })}
           </motion.div>
 
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Main Detection Area */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Crop Selection */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <Card glass className="p-6">
-                  <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                    <FiCamera className="text-green-400" />
-                    Select Crop Type
-                  </h3>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {supportedCrops.map((crop) => (
-                      <motion.button
-                        key={crop.id}
-                        onClick={() => setCropId(crop.id)}
-                        className={`p-3 rounded-lg border transition-all text-center ${
-                          cropId === crop.id
-                            ? 'bg-green-500/20 border-green-500/50 text-white'
-                            : 'bg-white/10 border-white/20 text-white/80 hover:bg-white/15'
-                        }`}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <div className="text-2xl mb-1">{crop.icon}</div>
-                        <div className="text-sm font-medium">{crop.name}</div>
-                        <div className="text-xs opacity-70">{crop.confidence}% accuracy</div>
-                      </motion.button>
-                    ))}
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Left — Main Workflow */}
+            <div className="lg:col-span-2 space-y-5">
+
+              {/* Step 1 — Crop Selection */}
+              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+                <div className="bg-white/4 border border-white/10 rounded-2xl p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="w-6 h-6 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-bold flex items-center justify-center">1</span>
+                    <h2 className="text-white font-semibold">Select Crop Type</h2>
+                    {cropId && (
+                      <span className="ml-auto flex items-center gap-1 text-emerald-400 text-xs font-medium">
+                        <FiCheckCircle size={13} />
+                        {SUPPORTED_CROPS.find(c => c.id === cropId)?.name} selected
+                      </span>
+                    )}
                   </div>
-                </Card>
+
+                  <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                    {SUPPORTED_CROPS.map((crop) => {
+                      const isSelected = cropId === crop.id;
+                      return (
+                        <motion.button
+                          key={crop.id}
+                          onClick={() => setCropId(crop.id)}
+                          className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all ${
+                            isSelected
+                              ? 'bg-emerald-500/20 border-emerald-500/50 shadow-lg shadow-emerald-500/10'
+                              : 'bg-white/4 border-white/10 hover:bg-white/8 hover:border-white/20'
+                          }`}
+                          whileHover={{ scale: 1.04 }}
+                          whileTap={{ scale: 0.96 }}
+                        >
+                          <span className="text-2xl">{crop.icon}</span>
+                          <span className={`text-xs font-medium leading-tight text-center ${isSelected ? 'text-emerald-300' : 'text-white/70'}`}>
+                            {crop.name}
+                          </span>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </div>
               </motion.div>
 
-              {/* Image Upload */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <Card glass className="p-6">
-                  <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                    <FiUpload className="text-blue-400" />
-                    Upload Crop Image
-                  </h3>
-                  
-                  <ImageUploadComponent onImageCapture={handleImageCapture} />
-                  
-                  {image && typeof image === 'string' && (
-                    <motion.div 
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="mt-4 p-4 bg-white/10 rounded-lg border border-white/20"
-                    >
-                      <h4 className="font-semibold text-white mb-3">Captured Image Preview</h4>
-                      <img src={image} alt="Captured" className="w-full max-h-64 object-contain rounded-lg" />
-                    </motion.div>
+              {/* Step 2 — Image Upload */}
+              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+                <div className="bg-white/4 border border-white/10 rounded-2xl p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className={`w-6 h-6 rounded-full border text-xs font-bold flex items-center justify-center ${
+                      cropId
+                        ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
+                        : 'bg-white/8 border-white/20 text-white/40'
+                    }`}>2</span>
+                    <h2 className={`font-semibold ${cropId ? 'text-white' : 'text-white/40'}`}>
+                      Upload Crop Image
+                    </h2>
+                  </div>
+
+                  {cropId ? (
+                    <ImageUploadComponent onImageCapture={handleImageCapture} />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-3 py-10 border-2 border-dashed border-white/10 rounded-2xl">
+                      <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center">
+                        <FiUpload className="text-white/25" size={22} />
+                      </div>
+                      <p className="text-white/30 text-sm">Select a crop type above to continue</p>
+                    </div>
                   )}
-                </Card>
+                </div>
               </motion.div>
 
-              {/* AI Analysis Progress */}
+              {/* Analysis Progress */}
               <AnimatePresence>
                 {loading && (
                   <motion.div
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
+                    exit={{ opacity: 0, y: -16 }}
                   >
-                    <Card glass className="p-6">
-                      <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                        <FiActivity className="text-yellow-400" />
-                        AI Analysis in Progress
-                      </h3>
-                      
-                      <div className="space-y-4">
-                        <div>
-                          <div className="flex justify-between text-white mb-2">
-                            <span>Processing Image...</span>
-                            <span>{analysisProgress}%</span>
-                          </div>
-                          <div className="w-full bg-white/20 rounded-full h-2">
-                            <motion.div 
-                              className="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full"
-                              initial={{ width: 0 }}
-                              animate={{ width: `${analysisProgress}%` }}
-                              transition={{ duration: 0.3 }}
-                            />
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-3 gap-4 text-center">
-                          <div className="p-3 bg-white/10 rounded-lg">
-                            <FiZap className="text-2xl text-yellow-400 mx-auto mb-1" />
-                            <div className="text-xs text-white/70">Analyzing</div>
-                          </div>
-                          <div className="p-3 bg-white/10 rounded-lg">
-                            <FiTarget className="text-2xl text-blue-400 mx-auto mb-1" />
-                            <div className="text-xs text-white/70">Detecting</div>
-                          </div>
-                          <div className="p-3 bg-white/10 rounded-lg">
-                            <FiCheckCircle className="text-2xl text-green-400 mx-auto mb-1" />
-                            <div className="text-xs text-white/70">Validating</div>
-                          </div>
-                        </div>
+                    <div className="bg-white/4 border border-white/10 rounded-2xl p-5">
+                      <div className="flex items-center gap-2 mb-5">
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
+                        >
+                          <FiCpu className="text-emerald-400" size={18} />
+                        </motion.div>
+                        <h2 className="text-white font-semibold">Analyzing…</h2>
+                        <span className="ml-auto text-emerald-400 font-bold text-sm">{analysisProgress}%</span>
                       </div>
-                    </Card>
+
+                      <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden mb-4">
+                        <motion.div
+                          className="h-full bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${analysisProgress}%` }}
+                          transition={{ duration: 0.4 }}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-4 gap-2">
+                        {analysisSteps.map((step, i) => (
+                          <div
+                            key={step}
+                            className={`p-2.5 rounded-xl text-center transition-all ${
+                              i <= analysisStep
+                                ? 'bg-emerald-500/15 border border-emerald-500/30'
+                                : 'bg-white/5 border border-white/10'
+                            }`}
+                          >
+                            <div className={`text-xs font-medium leading-tight ${
+                              i <= analysisStep ? 'text-emerald-300' : 'text-white/30'
+                            }`}>{step}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
 
               {/* Not a Crop Error */}
-              {notACropError && !loading && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-                  <Card glass className="p-6 border-red-500/30">
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <FiAlertCircle className="text-red-400 text-xl" />
+              <AnimatePresence>
+                {notACropError && !loading && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <div className="bg-red-500/10 border border-red-500/25 rounded-2xl p-5 flex items-start gap-4">
+                      <div className="w-10 h-10 bg-red-500/20 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <FiAlertCircle className="text-red-400" size={18} />
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-white font-bold text-lg mb-1">{t('notACrop')}</h3>
-                        <p className="text-white/70 text-sm mb-4">{notACropError}</p>
-                        <p className="text-white/50 text-xs mb-4">{t('notACropMsg')}</p>
-                        <button onClick={handleRetry} className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm transition-colors">
-                          <FiRefreshCw size={14} /> Try Another Image
+                        <h3 className="text-white font-semibold mb-1">Not a crop image</h3>
+                        <p className="text-white/55 text-sm mb-4">{notACropError}</p>
+                        <button
+                          onClick={handleRetry}
+                          className="flex items-center gap-2 px-4 py-2 bg-white/8 hover:bg-white/12 border border-white/15 text-white/80 hover:text-white rounded-xl text-sm font-medium transition-all"
+                        >
+                          <FiRefreshCw size={13} /> Try Again
                         </button>
                       </div>
                     </div>
-                  </Card>
-                </motion.div>
-              )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Detection Results */}
-              {detection && !loading && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                >
-                  <CropVerificationPanel
-                    detection={detection}
-                    loading={loading}
-                    onRetry={handleRetry}
-                    language={language}
-                  />
-                </motion.div>
-              )}
+              <AnimatePresence>
+                {detection && !loading && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <CropVerificationPanel
+                      detection={detection}
+                      loading={loading}
+                      onRetry={handleRetry}
+                      language={language}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Environmental Data */}
-              {environmentalData && (
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <Card glass className="p-6">
-                    <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                      <FiThermometer className="text-orange-400" />
-                      Environmental Conditions
-                    </h3>
-                    
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-white/70 flex items-center gap-2">
-                          <FiThermometer /> Temperature
-                        </span>
-                        <span className="text-white font-semibold">{environmentalData.temperature}°C</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-white/70 flex items-center gap-2">
-                          <FiDroplet /> Humidity
-                        </span>
-                        <span className="text-white font-semibold">{environmentalData.humidity}%</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-white/70 flex items-center gap-2">
-                          <FiSun /> Sunlight
-                        </span>
-                        <span className="text-white font-semibold">{environmentalData.sunlight}h</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-white/70 flex items-center gap-2">
-                          <FiMapPin /> Location
-                        </span>
-                        <span className="text-white font-semibold text-sm">
-                          {environmentalData.location.latitude.toFixed(2)}, {environmentalData.location.longitude.toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  </Card>
-                </motion.div>
-              )}
-
-              {/* Language Selection */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
-              >
-                <Card glass className="p-6">
-                  <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                    <FiInfo className="text-purple-400" />
-                    {t('settings')}
-                  </h3>
-                  <div>
-                    <label className="block text-sm font-medium text-white/80 mb-2">
-                      {t('language')}
-                    </label>
-                    <div className="flex items-center gap-2 p-3 bg-white/10 border border-white/20 rounded-lg text-white text-sm">
-                      <span className="text-white/60">Current:</span>
-                      <span className="font-medium">{language.toUpperCase()}</span>
-                      <span className="text-white/40 text-xs ml-auto">Use the 🌐 button above to change</span>
-                    </div>
-                  </div>
-                </Card>
-              </motion.div>
-
-              {/* Detection History */}
-              {detectionHistory.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 }}
-                >
-                  <Card glass className="p-6">
-                    <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                      <FiClock className="text-indigo-400" />
-                      Recent Detections
-                    </h3>
-                    
-                    <div className="space-y-3">
-                      {detectionHistory.map((item) => (
-                        <div key={item.id} className="p-3 bg-white/10 rounded-lg border border-white/20">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <div className="font-semibold text-white text-sm">{item.crop}</div>
-                              <div className="text-xs text-white/60">
-                                {item.timestamp.toLocaleTimeString()}
-                              </div>
-                            </div>
-                            <div className="text-xs px-2 py-1 bg-green-500/20 text-green-300 rounded-full">
-                              {item.confidence}%
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-                </motion.div>
-              )}
+            <div className="space-y-5">
 
               {/* AI Confidence */}
               {aiConfidence > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.6 }}
-                >
-                  <Card glass className="p-6">
-                    <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                      <FiZap className="text-yellow-400" />
-                      AI Confidence Score
-                    </h3>
-                    
-                    <div className="text-center">
-                      <div className="text-4xl font-bold text-white mb-2">{aiConfidence}%</div>
-                      <div className="text-white/60 text-sm mb-3">Detection Confidence</div>
-                      <div className="w-full bg-white/20 rounded-full h-3">
-                        <motion.div 
-                          className="bg-gradient-to-r from-yellow-400 to-green-500 h-3 rounded-full"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${aiConfidence}%` }}
-                          transition={{ duration: 1, delay: 0.5 }}
-                        />
-                      </div>
+                <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }}>
+                  <div className="bg-white/4 border border-white/10 rounded-2xl p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <FiZap className="text-yellow-400" size={16} />
+                      <h3 className="text-white font-semibold text-sm">AI Confidence</h3>
                     </div>
-                  </Card>
+                    <div className="text-center mb-4">
+                      <span className="text-5xl font-bold text-white">{aiConfidence}</span>
+                      <span className="text-2xl font-bold text-white/50">%</span>
+                    </div>
+                    <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full rounded-full bg-gradient-to-r from-yellow-400 to-emerald-400"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${aiConfidence}%` }}
+                        transition={{ duration: 1, delay: 0.2 }}
+                      />
+                    </div>
+                    <p className="text-white/40 text-xs text-center mt-2">Detection reliability score</p>
+                  </div>
                 </motion.div>
               )}
+
+              {/* Environmental Conditions */}
+              {environmentalData && (
+                <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
+                  <div className="bg-white/4 border border-white/10 rounded-2xl p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <FiThermometer className="text-orange-400" size={16} />
+                      <h3 className="text-white font-semibold text-sm">Environment</h3>
+                      <span className="ml-auto flex items-center gap-1 text-white/30 text-xs">
+                        <FiMapPin size={11} />
+                        {environmentalData.location.latitude.toFixed(1)}, {environmentalData.location.longitude.toFixed(1)}
+                      </span>
+                    </div>
+                    <div className="space-y-3">
+                      {[
+                        { icon: FiThermometer, label: 'Temperature', value: `${environmentalData.temperature}°C`, color: 'text-orange-400' },
+                        { icon: FiDroplet,     label: 'Humidity',    value: `${environmentalData.humidity}%`,    color: 'text-blue-400'   },
+                        { icon: FiSun,         label: 'Sunlight',    value: `${environmentalData.sunlight}h`,    color: 'text-yellow-400' },
+                      ].map(({ icon: Icon, label, value, color }) => (
+                        <div key={label} className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Icon className={color} size={14} />
+                            <span className="text-white/50 text-sm">{label}</span>
+                          </div>
+                          <span className="text-white text-sm font-semibold">{value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Detection History */}
+              {detectionHistory.length > 0 && (
+                <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 }}>
+                  <div className="bg-white/4 border border-white/10 rounded-2xl p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <FiClock className="text-indigo-400" size={16} />
+                      <h3 className="text-white font-semibold text-sm">Recent Scans</h3>
+                      <span className="ml-auto text-white/30 text-xs">{detectionHistory.length} total</span>
+                    </div>
+                    <div className="space-y-2">
+                      {detectionHistory.map((item) => (
+                        <div key={item.id} className="flex items-center gap-3 p-3 bg-white/4 rounded-xl">
+                          <div className="flex-1 min-w-0">
+                            <div className="text-white text-sm font-medium truncate">{item.crop}</div>
+                            <div className="text-white/35 text-xs">{item.timestamp.toLocaleTimeString()}</div>
+                          </div>
+                          <span className="px-2 py-0.5 bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-semibold rounded-full flex-shrink-0">
+                            {item.confidence}%
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Language Info */}
+              <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
+                <div className="bg-white/4 border border-white/10 rounded-2xl p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <h3 className="text-white font-semibold text-sm">{t('settings')}</h3>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-white/4 rounded-xl">
+                    <span className="text-white/50 text-sm">{t('language')}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-white text-sm font-semibold uppercase">{language}</span>
+                      <span className="text-white/30 text-xs">via 🌐 above</span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Quick Tips */}
+              <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25 }}>
+                <div className="bg-white/4 border border-white/10 rounded-2xl p-5">
+                  <h3 className="text-white font-semibold text-sm mb-3">Tips for Best Results</h3>
+                  <ul className="space-y-2">
+                    {[
+                      'Use natural lighting when possible',
+                      'Focus on affected leaves or stems',
+                      'Avoid blurry or dark images',
+                      'Include the whole leaf in frame',
+                    ].map((tip) => (
+                      <li key={tip} className="flex items-start gap-2">
+                        <FiChevronRight className="text-emerald-500 mt-0.5 flex-shrink-0" size={13} />
+                        <span className="text-white/50 text-xs">{tip}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </motion.div>
             </div>
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );
