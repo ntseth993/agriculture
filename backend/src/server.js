@@ -17,10 +17,11 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      connectSrc: ["'self'", "localhost:*", "http://localhost:*", "https://*.replit.dev", "wss://*.replit.dev"],
-      imgSrc: ["'self'", "data:", "blob:", "https://*.replit.dev"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      connectSrc: ["'self'", "localhost:*", "http://localhost:*", "https://*.replit.dev", "wss://*.replit.dev", "https://accounts.google.com", "https://oauth2.googleapis.com", "https://www.googleapis.com"],
+      imgSrc: ["'self'", "data:", "blob:", "https://*.replit.dev", "https://images.unsplash.com", "https://lh3.googleusercontent.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com", "https://apis.google.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com"],
+      frameSrc: ["'self'", "https://accounts.google.com"],
     },
   },
 }));

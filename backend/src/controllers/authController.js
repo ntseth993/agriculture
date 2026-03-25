@@ -100,6 +100,64 @@ exports.login = async (req, res) => {
   }
 };
 
+// Google OAuth Login/Register
+exports.googleAuth = async (req, res) => {
+  try {
+    const { token: googleToken } = req.body;
+    if (!googleToken) {
+      return res.status(400).json({ message: 'Google token is required' });
+    }
+
+    const { OAuth2Client } = require('google-auth-library');
+    const client = new OAuth2Client('970571415745-h2uac1cfg1hgnctre8m0pqtpttlfm83t.apps.googleusercontent.com');
+
+    const ticket = await client.verifyIdToken({
+      idToken: googleToken,
+      audience: '970571415745-h2uac1cfg1hgnctre8m0pqtpttlfm83t.apps.googleusercontent.com',
+    });
+
+    const payload = ticket.getPayload();
+    const { email, name, picture, sub: googleId } = payload;
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = new User({
+        name,
+        email,
+        googleId,
+        avatar: picture,
+        phone: `google_${googleId}`,
+        password: `google_oauth_${googleId}_${Date.now()}`,
+        role: 'farmer',
+        isGoogleUser: true,
+      });
+      await user.save();
+    } else if (!user.googleId) {
+      user.googleId = googleId;
+      user.avatar = picture || user.avatar;
+      await user.save();
+    }
+
+    const token = generateToken(user._id);
+
+    res.status(200).json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+      },
+    });
+  } catch (error) {
+    console.error('Google auth error:', error);
+    res.status(401).json({ message: 'Google authentication failed. Please try again.' });
+  }
+};
+
 // Get current logged in user
 exports.getMe = async (req, res) => {
   try {
