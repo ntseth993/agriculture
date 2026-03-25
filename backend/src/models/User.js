@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      required: [true, 'Please provide a phone number'],
+      default: '',
     },
     password: {
       type: String,
@@ -26,8 +26,12 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['farmer', 'agro-vet', 'pharmacy'],
+      enum: ['farmer', 'agro-vet', 'pharmacy', 'admin'],
       default: 'farmer',
+    },
+    isBanned: {
+      type: Boolean,
+      default: false,
     },
     location: {
       type: {
@@ -60,6 +64,12 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
     profileImage: String,
+    googleId: String,
+    avatar: String,
+    isGoogleUser: {
+      type: Boolean,
+      default: false,
+    },
     verified: {
       type: Boolean,
       default: false,

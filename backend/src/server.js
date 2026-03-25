@@ -63,9 +63,35 @@ try {
   app.use('/api/treatments', require('./routes/treatments'));
   app.use('/api/location', require('./routes/location'));
   app.use('/api/alerts', require('./routes/alerts'));
+  app.use('/api/admin', require('./routes/admin'));
+  app.use('/api/chat', require('./routes/chat'));
 } catch (error) {
   console.warn('Warning loading routes:', error.message);
 }
+
+// Auto-seed admin user on startup
+const seedAdmin = async () => {
+  try {
+    const mongoose = require('mongoose');
+    if (mongoose.connection.readyState !== 1) return;
+    const User = require('./models/User');
+    const existing = await User.findOne({ email: 'admin@crophealth.ai' });
+    if (!existing) {
+      await User.create({
+        name: 'Administrator',
+        email: 'admin@crophealth.ai',
+        phone: '+000000000',
+        password: 'admin123',
+        role: 'admin',
+        verified: true,
+      });
+      console.log('Admin user created: admin@crophealth.ai / admin123');
+    }
+  } catch (err) {
+    console.warn('Admin seed skipped:', err.message);
+  }
+};
+setTimeout(seedAdmin, 3000);
 
 // Health check
 app.get('/health', (req, res) => {

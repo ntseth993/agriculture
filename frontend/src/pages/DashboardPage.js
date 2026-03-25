@@ -1,36 +1,47 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AlertsPanel } from '../components/AlertsPanel';
-import { FaLeaf, FaCamera, FaMapMarkerAlt, FaBell, FaChartLine } from 'react-icons/fa';
-import { FiLogOut, FiMenu, FiX, FiUser, FiChevronRight } from 'react-icons/fi';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { FaLeaf, FaCamera, FaMapMarkerAlt, FaBell, FaChartLine, FaRobot } from 'react-icons/fa';
+import { FiLogOut, FiMenu, FiX, FiUser, FiChevronRight, FiShield } from 'react-icons/fi';
 
 export const DashboardPage = () => {
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const quickActions = [
     {
       icon: <FaCamera />,
-      title: 'Disease Detection',
+      title: t('detectDisease'),
       description: 'Upload crop images to detect diseases using AI',
       href: '/detect',
       gradient: 'from-green-500 to-emerald-600',
       shadow: 'shadow-green-500/30',
     },
     {
-      icon: <FaMapMarkerAlt />,
-      title: 'Find Services',
-      description: 'Locate nearby agro-vets and pharmacies',
-      href: '/locations',
+      icon: <FaRobot />,
+      title: t('aiChat'),
+      description: 'Chat with AI for crop advice and disease help',
+      href: '/chat',
       gradient: 'from-blue-500 to-indigo-600',
       shadow: 'shadow-blue-500/30',
     },
     {
+      icon: <FaMapMarkerAlt />,
+      title: t('findServices'),
+      description: 'Locate nearby agro-vets and pharmacies',
+      href: '/locations',
+      gradient: 'from-purple-500 to-violet-600',
+      shadow: 'shadow-purple-500/30',
+    },
+    {
       icon: <FaBell />,
-      title: 'My Alerts',
+      title: t('alerts'),
       description: 'Receive weather and pest outbreak alerts',
       href: '/alerts',
       gradient: 'from-yellow-500 to-orange-500',
@@ -58,7 +69,19 @@ export const DashboardPage = () => {
             <span className="text-white font-bold hidden sm:block">CropHealth <span className="text-green-400">AI</span></span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher compact />
+            {user?.role === 'admin' && (
+              <motion.button
+                onClick={() => navigate('/admin')}
+                className="flex items-center gap-1.5 px-3 py-2 bg-purple-500/10 border border-purple-500/20 text-purple-400 hover:bg-purple-500/20 rounded-xl text-xs font-medium transition-all"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+              >
+                <FiShield className="text-sm" />
+                <span className="hidden sm:inline">{t('admin')}</span>
+              </motion.button>
+            )}
             <div className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 bg-white/5 border border-white/10 rounded-xl">
               <div className="w-7 h-7 bg-gradient-to-br from-green-400 to-emerald-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xs">{user?.name?.charAt(0) || 'U'}</span>
@@ -75,7 +98,7 @@ export const DashboardPage = () => {
               whileTap={{ scale: 0.97 }}
             >
               <FiLogOut className="text-sm" />
-              <span className="hidden sm:inline">Sign Out</span>
+              <span className="hidden sm:inline">{t('signOut')}</span>
             </motion.button>
           </div>
         </div>
@@ -105,7 +128,7 @@ export const DashboardPage = () => {
         </motion.div>
 
         {/* Quick Action Cards */}
-        <div className="grid md:grid-cols-3 gap-5 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {quickActions.map((action, index) => (
             <motion.a
               key={index}

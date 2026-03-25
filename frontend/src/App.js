@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { LanguageProvider } from './context/LanguageContext';
 import { ProtectedRoute } from './utils/ProtectedRoute';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
@@ -11,6 +12,8 @@ import { DashboardPage } from './pages/DashboardPage';
 import { DiseaseDetectionPage } from './pages/DiseaseDetectionPage';
 import { CropVerificationPage } from './pages/CropVerificationPage';
 import { LocationPage } from './pages/LocationPage';
+import { AdminPage } from './pages/AdminPage';
+import { ChatPage } from './pages/ChatPage';
 import { Toaster } from 'react-hot-toast';
 
 const GOOGLE_CLIENT_ID = '970571415745-h2uac1cfg1hgnctre8m0pqtpttlfm83t.apps.googleusercontent.com';
@@ -19,49 +22,25 @@ function App() {
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <Router>
-        <ThemeProvider>
-          <AuthProvider>
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <DashboardPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/detect"
-                element={
-                  <ProtectedRoute>
-                    <DiseaseDetectionPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/verify"
-                element={
-                  <ProtectedRoute>
-                    <CropVerificationPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/locations"
-                element={
-                  <ProtectedRoute>
-                    <LocationPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
-            <Toaster position="top-right" />
-          </AuthProvider>
-        </ThemeProvider>
+        <LanguageProvider>
+          <ThemeProvider>
+            <AuthProvider>
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+                <Route path="/detect" element={<ProtectedRoute><DiseaseDetectionPage /></ProtectedRoute>} />
+                <Route path="/verify" element={<ProtectedRoute><CropVerificationPage /></ProtectedRoute>} />
+                <Route path="/locations" element={<ProtectedRoute><LocationPage /></ProtectedRoute>} />
+                <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
+                <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+                <Route path="*" element={<Navigate to="/" />} />
+              </Routes>
+              <Toaster position="top-right" />
+            </AuthProvider>
+          </ThemeProvider>
+        </LanguageProvider>
       </Router>
     </GoogleOAuthProvider>
   );

@@ -86,21 +86,20 @@ exports.detectDisease = async (req, res) => {
     }
 
     // Detect disease using AI service
-    let detectionResult = await aiService.detectDiseaseFromImage(finalImageUrl);
+    let detectionResult = await aiService.detectDiseaseFromImage(finalImageUrl, cropId);
 
     // Validate detection result
     if (!detectionResult) {
       return res.status(500).json({ message: 'Disease detection failed - no result returned' });
     }
 
-    // Translate response to requested language
-    if (language && language !== 'en') {
-      try {
-        detectionResult = await translationService.translateDetectionResponse(detectionResult, language);
-      } catch (translationError) {
-        console.error('Translation failed:', translationError);
-        // Continue with English result if translation fails
-      }
+    // Check if the image is not a crop
+    if (detectionResult.notACrop) {
+      return res.status(422).json({
+        notACrop: true,
+        message: detectionResult.reason || 'The uploaded image does not appear to show a crop or plant.',
+        suggestion: 'Please upload a clear photo of the crop or plant you want to analyze.',
+      });
     }
 
     // Get or create the crop document

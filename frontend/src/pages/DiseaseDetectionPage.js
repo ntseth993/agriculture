@@ -5,14 +5,17 @@ import { ImageUploadComponent } from '../components/ImageUploadComponent';
 import { CropVerificationPanel } from '../components/CropVerificationPanel';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { Card, StatCard } from '../components/Card';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { useLanguage } from '../context/LanguageContext';
 import { diseaseService } from '../services/api';
-import { FiCamera, FiUpload, FiCheckCircle, FiAlertTriangle, FiInfo, FiActivity, FiZap, FiTarget, FiTrendingUp, FiRefreshCw, FiMapPin, FiClock, FiThermometer, FiDroplet, FiSun } from 'react-icons/fi';
+import { FiCamera, FiUpload, FiCheckCircle, FiAlertTriangle, FiInfo, FiActivity, FiZap, FiTarget, FiTrendingUp, FiRefreshCw, FiMapPin, FiClock, FiThermometer, FiDroplet, FiSun, FiAlertCircle } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 export const DiseaseDetectionPage = () => {
+  const { language, t } = useLanguage();
   const [image, setImage] = useState(null);
   const [cropId, setCropId] = useState('');
-  const [language, setLanguage] = useState('en');
+  const [notACropError, setNotACropError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [detection, setDetection] = useState(null);
   const [analysisProgress, setAnalysisProgress] = useState(0);
@@ -80,13 +83,14 @@ export const DiseaseDetectionPage = () => {
 
   const analyzeImage = async (imageData) => {
     if (!cropId) {
-      toast.error('Please select a crop first');
+      toast.error(t('selectCrop'));
       return;
     }
 
     try {
       setLoading(true);
       setDetection(null);
+      setNotACropError(null);
       setAnalysisProgress(0);
       setAiConfidence(0);
 
@@ -144,7 +148,13 @@ export const DiseaseDetectionPage = () => {
       toast.success(`Disease analysis complete! AI Confidence: ${confidence}% 🎯`);
     } catch (error) {
       console.error('Analysis error:', error);
-      toast.error(error.message || 'Analysis failed. Please try again.');
+      const errData = error?.response?.data || error;
+      if (errData?.notACrop) {
+        setNotACropError(errData.message || 'The image does not appear to be a crop.');
+        toast.error(t('notACrop'));
+      } else {
+        toast.error(errData?.message || 'Analysis failed. Please try again.');
+      }
     } finally {
       setLoading(false);
       setAnalysisProgress(0);
@@ -154,6 +164,7 @@ export const DiseaseDetectionPage = () => {
   const handleRetry = () => {
     setDetection(null);
     setImage(null);
+    setNotACropError(null);
   };
 
   return (
@@ -209,12 +220,12 @@ export const DiseaseDetectionPage = () => {
               <span>←</span> Back to Dashboard
             </motion.button>
             
-            <div className="flex items-center gap-4">
-              <div className="text-white/80 text-sm">
+            <div className="flex items-center gap-3">
+              <LanguageSwitcher compact />
+              <div className="text-white/80 text-sm hidden sm:flex items-center">
                 <FiZap className="inline mr-1" />
                 AI-Powered Detection
               </div>
-              <ThemeToggle />
             </div>
           </div>
         </motion.div>
@@ -389,6 +400,27 @@ export const DiseaseDetectionPage = () => {
                 )}
               </AnimatePresence>
 
+              {/* Not a Crop Error */}
+              {notACropError && !loading && (
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                  <Card glass className="p-6 border-red-500/30">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <FiAlertCircle className="text-red-400 text-xl" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-white font-bold text-lg mb-1">{t('notACrop')}</h3>
+                        <p className="text-white/70 text-sm mb-4">{notACropError}</p>
+                        <p className="text-white/50 text-xs mb-4">{t('notACropMsg')}</p>
+                        <button onClick={handleRetry} className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm transition-colors">
+                          <FiRefreshCw size={14} /> Try Another Image
+                        </button>
+                      </div>
+                    </div>
+                  </Card>
+                </motion.div>
+              )}
+
               {/* Detection Results */}
               {detection && !loading && (
                 <motion.div
@@ -461,24 +493,17 @@ export const DiseaseDetectionPage = () => {
                 <Card glass className="p-6">
                   <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                     <FiInfo className="text-purple-400" />
-                    Analysis Settings
+                    {t('settings')}
                   </h3>
-                  
                   <div>
                     <label className="block text-sm font-medium text-white/80 mb-2">
-                      Response Language
+                      {t('language')}
                     </label>
-                    <select
-                      value={language}
-                      onChange={(e) => setLanguage(e.target.value)}
-                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                    >
-                      {Object.entries(supportedLanguages).map(([code, name]) => (
-                        <option key={code} value={code} className="bg-gray-800">
-                          {name}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="flex items-center gap-2 p-3 bg-white/10 border border-white/20 rounded-lg text-white text-sm">
+                      <span className="text-white/60">Current:</span>
+                      <span className="font-medium">{language.toUpperCase()}</span>
+                      <span className="text-white/40 text-xs ml-auto">Use the 🌐 button above to change</span>
+                    </div>
                   </div>
                 </Card>
               </motion.div>

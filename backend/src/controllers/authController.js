@@ -82,6 +82,11 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
+    // Check if user is banned
+    if (user.isBanned) {
+      return res.status(403).json({ message: 'Your account has been suspended. Please contact support.' });
+    }
+
     const token = generateToken(user._id);
 
     res.status(200).json({
