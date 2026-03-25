@@ -148,6 +148,10 @@ exports.detectDisease = async (req, res) => {
 // Get user's detection history
 exports.getDetectionHistory = async (req, res) => {
   try {
+    const isDbConnected = () => mongoose.connection.readyState === 1;
+    if (!isDbConnected()) {
+      return res.status(200).json([]);
+    }
     const { language = 'en' } = req.query;
     const detections = await DiseaseDetection.find({
       farmer: req.user.id,

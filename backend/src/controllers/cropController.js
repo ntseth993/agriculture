@@ -1,6 +1,8 @@
+const mongoose = require('mongoose');
 const Crop = require('../models/Crop');
 const DiseaseDetection = require('../models/DiseaseDetection');
 const axios = require('axios');
+const isDbConnected = () => mongoose.connection.readyState === 1;
 
 // Verify crop from uploaded image
 exports.verifyCrop = async (req, res) => {
@@ -112,6 +114,9 @@ exports.getCropDetails = async (req, res) => {
 // Get all available crops for verification
 exports.getAllCrops = async (req, res) => {
   try {
+    if (!isDbConnected()) {
+      return res.status(200).json({ success: true, count: 0, crops: [] });
+    }
     const crops = await Crop.find({}).populate('commonDiseases');
 
     res.status(200).json({

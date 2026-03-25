@@ -1,4 +1,6 @@
+const mongoose = require('mongoose');
 const Alert = require('../models/Alert');
+const isDbConnected = () => mongoose.connection.readyState === 1;
 
 // Lazy-load Twilio only when needed
 let client = null;
@@ -67,6 +69,10 @@ exports.createAlert = async (req, res) => {
 // Get alerts for user
 exports.getUserAlerts = async (req, res) => {
   try {
+    if (!isDbConnected()) {
+      return res.status(200).json({ success: true, count: 0, alerts: [] });
+    }
+
     const { type, read } = req.query;
 
     const query = { recipient: req.user.id };

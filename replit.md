@@ -6,8 +6,8 @@ AI-powered crop disease detection and farm management system for farmers. Users 
 ## Architecture
 - **Backend**: Express.js (Node.js) — `backend/src/server.js`, port 5000
 - **Frontend**: React (Create React App) — built to `frontend/build/`, served by backend
-- **Database**: MongoDB via Mongoose
-- **Auth**: JWT + Google OAuth (Google Identity Services)
+- **Database**: MongoDB via Mongoose (optional — app runs in demo mode without it)
+- **Auth**: JWT + Google OAuth (Google Identity Services); in-memory fallback when MongoDB is not configured
 
 ## Key Stack
 - React 18, React Router v6, Framer Motion, Tailwind CSS

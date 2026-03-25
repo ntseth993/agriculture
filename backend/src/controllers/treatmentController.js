@@ -1,9 +1,14 @@
+const mongoose = require('mongoose');
 const Treatment = require('../models/Treatment');
 const Disease = require('../models/Disease');
+const isDbConnected = () => mongoose.connection.readyState === 1;
 
 // Get treatments for a disease
 exports.getTreatmentsForDisease = async (req, res) => {
   try {
+    if (!isDbConnected()) {
+      return res.status(200).json({ success: true, count: 0, treatments: [] });
+    }
     const { diseaseId } = req.params;
     const { type } = req.query; // Filter by 'organic' or 'chemical'
 
@@ -29,6 +34,9 @@ exports.getTreatmentsForDisease = async (req, res) => {
 // Get all treatments
 exports.getAllTreatments = async (req, res) => {
   try {
+    if (!isDbConnected()) {
+      return res.status(200).json({ success: true, count: 0, treatments: [] });
+    }
     const { type, minEfficacy } = req.query;
 
     const query = {};

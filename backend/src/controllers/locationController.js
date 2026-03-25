@@ -1,5 +1,7 @@
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const axios = require('axios');
+const isDbConnected = () => mongoose.connection.readyState === 1;
 
 // Find nearby agro-vets and pharmacies
 exports.findNearby = async (req, res) => {
@@ -8,6 +10,10 @@ exports.findNearby = async (req, res) => {
 
     if (!latitude || !longitude) {
       return res.status(400).json({ message: 'Latitude and longitude are required' });
+    }
+
+    if (!isDbConnected()) {
+      return res.status(200).json({ success: true, count: 0, users: [] });
     }
 
     const radiusInMeters = radius * 1000;
